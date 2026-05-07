@@ -1,0 +1,50 @@
+kubectl apply -f k8s/namespace.yml
+kubectl apply -n demo-$NAME -f k8s/backend-deployment.yml -f k8s/backend-service.yml
+kubectl apply -n demo-$NAME -f k8s/frontend-deployment.yml -f k8s/frontend-service.yml
+kubectl apply -n demo-$NAME -f k8s/ingress.yml
+
+kubectl get deploy,svc,ingress -n demo-$NAME -o wide
+NAME=hagen
+curl -H "Host: $HOST" http://<ingress-lb-hostname>/api/ping
+curl -H "Host: app.hagen.ironlabs.online" \
+curl http://a0973e82b0c0c4373af56c9aa8a8d0f3-4eb85ae34ab2b516.elb.us-east-2.amazonaws.com/api/ping
+
+export HOST="app.hagen.ironlabs.online"
+export LB="a0973e82b0c0c4373af56c9aa8a8d0f3-4eb85ae34ab2b516.elb.us-east-2.amazonaws.com"
+
+curl -H "Host: $HOST" http://$LB/api/ping
+
+docker stop $(docker ps -aq)
+docker rm $(docker ps -aq)
+docker rmi -f $(docker images -q)
+docker update --restart=no $(docker ps -aq)
+
+---
+
+##############################
+export HOST="app.hagen.ironlabs.online"
+export LB="aa8e0b927f1c54bf4a31998d56a28913-7e6995266d900cd9.elb.us-east-2.amazonaws.com"
+
+# Test Backend
+
+curl -H "Host: $HOST" http://$LB/api/ping
+
+# Test Frontend
+
+## curl -H "Host: $HOST" http://$LB/
+
+##############################
+
+ingress.networking.k8s.io/multi-tier-ingress created
+big_mac@MacBookAir multi-tier-ingress-eks-lab % kubectl get deploy,svc,ingress -n demo-$NAME -o wide
+
+NAME READY UP-TO-DATE AVAILABLE AGE CONTAINERS IMAGES SELECTOR
+deployment.apps/backend 0/2 2 0 25s backend 0098765/lab-backend:1.0 app=backend
+deployment.apps/frontend 0/2 2 0 17s frontend 0098765/lab-frontend:1.0 app=frontend
+
+NAME TYPE CLUSTER-IP EXTERNAL-IP PORT(S) AGE SELECTOR
+service/backend ClusterIP 10.100.16.3 <none> 3000/TCP 24s app=backend
+service/frontend ClusterIP 10.100.148.137 <none> 80/TCP 17s app=frontend
+
+NAME CLASS HOSTS ADDRESS PORTS AGE
+ingress.networking.k8s.io/multi-tier-ingress nginx app.hagen.ironlabs.online aa8e0b927f1c54bf4a31998d56a28913-7e6995266d900cd9.elb.us-east-2.amazonaws.com 80 9s

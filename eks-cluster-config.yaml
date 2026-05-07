@@ -1,0 +1,19 @@
+# eks-cluster-config.yaml
+
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: hagen-eks-lab3
+  region: us-east-2
+
+nodeGroups:
+  - name: ng-lab
+    instanceType: t3.large
+    desiredCapacity: 2
+    privateNetworking: true
+    volumeSize: 20
+    labels:
+      role: worker
+    tags:
+      nodegroup: lab

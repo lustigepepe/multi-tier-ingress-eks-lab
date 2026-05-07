@@ -1,0 +1,97 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2869
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;\f1\fmodern\fcharset0 Courier;}
+{\colortbl;\red255\green255\blue255;\red13\green16\blue19;\red255\green255\blue255;\red0\green0\blue0;
+\red219\green63\blue57;\red249\green249\blue249;\red42\green44\blue51;\red50\green94\blue238;\red66\green147\blue62;
+\red255\green238\blue149;\red21\green102\blue47;}
+{\*\expandedcolortbl;;\cssrgb\c5882\c7843\c9804;\cssrgb\c100000\c100000\c100000;\cssrgb\c0\c0\c0;
+\cssrgb\c89412\c33725\c28627;\cssrgb\c98039\c98039\c98039;\cssrgb\c21961\c22745\c25882;\cssrgb\c25098\c47059\c94902;\cssrgb\c31373\c63137\c30980;
+\cssrgb\c100000\c94118\c64706;\cssrgb\c7451\c46667\c23922;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww28600\viewh14420\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs26\fsmilli13333 \cf2 \cb3 \expnd0\expndtw0\kerning0
+# 1. Delete all resources in all namespaces (safest order)\
+kubectl delete all --all --all-namespaces\
+\
+# 2. Delete all persistent volumes (if any)\
+kubectl delete pv --all\
+\
+# 3. Delete all namespaces (except kube-system and default)\
+kubectl get ns --no-headers | awk '\{print $1\}' | grep -vE 'default|kube-system|kube-public|kube-node-lease' | xargs -I \{\} kubectl delete ns \{\}\
+\
+# 4. Wait and clean remaining stuck resources\
+kubectl get all --all-namespaces\
+\
+\
+# Set once for convenience\
+\
+\pard\pardeftab720\partightenfactor0
+
+\fs26 \cf5 \cb6 #!/bin/bash\cf7 \
+\pard\pardeftab720\partightenfactor0
+\cf8 \cb6 USERNAME=\cf9 "0098765"
+\fs26\fsmilli13333 \cf2 \cb3 \
+ \
+# Backend\
+docker build -t $USERNAME/lab-backend:1.0 ./backend\
+# Frontend\
+docker build -t $USERNAME/lab-frontend:1.0 ./frontend\
+ \
+docker push $USERNAME/lab-backend:1.0\
+docker push $USERNAME/lab-frontend:1.0\
+\
+\pard\pardeftab720\partightenfactor0
+\cf2 ####\
+kubectl get svc -n ingress-nginx\
+\
+kubectl get ingress multi-tier-ingress -n demo-hagen -o yaml <-\
+\
+\pard\pardeftab720\partightenfactor0
+
+\fs26 \cf7 \cb6 kubectl rollout restart deployment backend -n demo-hagen\
+kubectl rollout restart deployment frontend -n demo-hagen
+\fs26\fsmilli13333 \cf2 \cb3 \
+####\
+\
+()\
+# Force delete with node draining disabled for problematic pods\
+eksctl delete cluster \\\
+  --name hagen-eks-lab2 \\\
+  --region us-east-2 \\\
+  --disable-nodegroup-eviction \\\
+  --wait\
+()\
+aws eks describe-cluster \\\
+  --name hagen-eks-lab3 \\\
+  --region us-east-2 \\\
+  --output yaml\
+\
+\'c4\'c4\'c4\'c4\'c4\
+
+\fs26 \cf7 \cb6 kubectl get pods -n demo-hagen -o wide
+\fs26\fsmilli13333 \cf2 \cb3 \
+\
+kubectl create deployment nginx-deployment --image=nginx:latest\
+kubectl get deployments\
+\
+Ingress ready:\
+kubectl get ingress -A -w\
+\
+\
+\pard\pardeftab720\partightenfactor0
+\cf2 \'c4\'c4\'c4\'c4\'c4\
+\pard\pardeftab720\partightenfactor0
+
+\fs26 \cf7 \cb6 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/aws/deploy.yaml\
+dig +short 
+\fs26\fsmilli13333 \cf2 \cb3 app.hagen.ironlabs.online
+\fs26 \cf7 \cb6 \
+\pard\pardeftab720\partightenfactor0
+
+\fs26\fsmilli13333 \cf2 \cb3 kubectl get svc ingress-nginx-controller -n ingress-nginx\
+\pard\pardeftab720\partightenfactor0
+\cf2 curl -H "Host: app.hagen.ironlabs.online" \\\
+http://aa8e0b927f1c54bf4a31998d56a28913-7e6995266d900cd9.elb.us-east-2.amazonaws.com/api/ping
+\f1\fs28 \cf10 \cb11 \kerning1\expnd0\expndtw0 \CocoaLigature0 \
+}
